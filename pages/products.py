@@ -204,20 +204,22 @@ def show_products():
                 size = st.selectbox('', product['sizes'], key=f"size_{product['id']}")
                 
                 if st.button('🛒 Add to Cart', key=f"add_{product['id']}"):
-                    if 'cart' not in st.session_state:
-                        st.session_state.cart = []
-                    
-                    cart_item = {
-                        'id': product['id'],
-                        'name': product['name'],
-                        'price': product['price'],
-                        'size': size,
-                        'quantity': 1
-                    }
-                    st.session_state.cart.append(cart_item)
-                    st.success("✨ Successfully added to cart!")
+                    add_to_cart(product, size)
             
             st.markdown('</div>', unsafe_allow_html=True)
+
+def add_to_cart(product, selected_size):
+    if 'cart' not in st.session_state:
+        st.session_state.cart = []
+    
+    # Add product with size to cart
+    cart_item = {
+        'name': product['name'],
+        'price': product['price'],
+        'size': selected_size,  # Add size to cart item
+        'quantity': 1
+    }
+    st.session_state.cart.append(cart_item)
 
 if __name__ == "__main__":
     show_products() 

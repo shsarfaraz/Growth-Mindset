@@ -42,6 +42,7 @@ def show_order_confirmation():
     for item in order['items']:
         st.markdown(f"""
         - **{item['name']}**  
+          Size: {item.get('size', 'N/A')}  
           Quantity: {item.get('quantity', 1)}  
           Price: Rs. {item['price']}  
           Subtotal: Rs. {item['price'] * item.get('quantity', 1)}
@@ -49,65 +50,19 @@ def show_order_confirmation():
     
     st.markdown(f"### Total Amount: Rs. {order['total_amount']}")
     
-    # Create Excel file
+    # Add download button for existing Excel file
     try:
-        # Prepare data for Excel
-        excel_data = []
-        for item in order['items']:
-            excel_data.append({
-                'Order ID': order['order_id'],
-                'Date': order['date'],
-                'Customer Name': order['customer_name'],
-                'Phone Number': order['customer_phone'],
-                'Delivery Address': order['customer_address'],
-                'Product Name': item['name'],
-                'Size': item.get('size', 'N/A'),
-                'Quantity': item.get('quantity', 1),
-                'Price': item['price'],
-                'Subtotal': item['price'] * item.get('quantity', 1),
-                'Total Amount': order['total_amount']
-            })
-        
-        # Create DataFrame
-        df_order = pd.DataFrame(excel_data)
-        
-        # Reorder columns to have a better layout
-        column_order = [
-            'Order ID', 
-            'Date', 
-            'Customer Name', 
-            'Phone Number', 
-            'Delivery Address', 
-            'Product Name',
-            'Size',
-            'Quantity', 
-            'Price', 
-            'Subtotal', 
-            'Total Amount'
-        ]
-        df_order = df_order[column_order]
-        
-        # Create orders directory if it doesn't exist
-        os.makedirs('orders', exist_ok=True)
-        
-        # Save to Excel
-        filename = f"order_{order['order_id']}.xlsx"
-        filepath = os.path.join('orders', filename)
-        df_order.to_excel(filepath, index=False)
-        
-        # Add download button
-        with open(filepath, 'rb') as file:
+        with open(order['excel_path'], 'rb') as file:
             excel_bytes = file.read()
             st.download_button(
                 label="📥 Download Invoice",
                 data=excel_bytes,
-                file_name=filename,
+                file_name=f"order_{order['order_id']}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 key="download_invoice_button"
             )
-    
     except Exception as e:
-        st.error(f"Error creating invoice: {str(e)}")
+        st.error(f"Error loading invoice: {str(e)}")
     
     # Continue shopping button
     if st.button("← Continue Shopping", type="primary"):

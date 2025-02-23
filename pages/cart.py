@@ -4,6 +4,10 @@ from datetime import datetime
 import os
 import uuid
 
+# Initialize session state for cart
+if 'cart' not in st.session_state:
+    st.session_state.cart = []
+
 def save_to_excel(order_data):
     # Create DataFrame for order
     order_items = []
@@ -63,6 +67,34 @@ def place_order():
             order_id = str(uuid.uuid4())[:8]
             current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
+            # Create order data
+            excel_data = []
+            for item in st.session_state.cart:
+                excel_data.append({
+                    'Order ID': order_id,
+                    'Date': current_date,
+                    'Customer Name': customer_name,
+                    'Phone Number': customer_phone,
+                    'Delivery Address': customer_address,
+                    'Product Name': item['name'],
+                    'Size': item.get('size', 'N/A'),
+                    'Quantity': item.get('quantity', 1),
+                    'Price': item['price'],
+                    'Subtotal': item['price'] * item.get('quantity', 1),
+                    'Total Amount': total_amount
+                })
+            
+            # Create DataFrame
+            df_order = pd.DataFrame(excel_data)
+            
+            # Ensure orders directory exists
+            os.makedirs('orders', exist_ok=True)
+            
+            # Save to Excel
+            filename = f"order_{order_id}.xlsx"
+            filepath = os.path.join('orders', filename)
+            df_order.to_excel(filepath, index=False)
+            
             # Save order details in session state
             st.session_state.last_order = {
                 'order_id': order_id,
@@ -71,7 +103,8 @@ def place_order():
                 'customer_phone': customer_phone,
                 'customer_address': customer_address,
                 'items': st.session_state.cart.copy(),
-                'total_amount': total_amount
+                'total_amount': total_amount,
+                'excel_path': filepath  # Save Excel file path
             }
             
             # Clear the cart
@@ -102,13 +135,15 @@ def show_cart():
     
     # Display cart items
     for i, item in enumerate(st.session_state.cart):
-        col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
+        col1, col2, col3, col4, col5, col6 = st.columns([2, 1, 1, 1, 1, 1])
         
         with col1:
             st.write(f"**{item['name']}**")
         with col2:
-            st.write(f"Rs. {item['price']}")
+            st.write(f"Size: {item.get('size', 'N/A')}")
         with col3:
+            st.write(f"Rs. {item['price']}")
+        with col4:
             if st.button("➕", key=f"plus_button_{i}"):
                 item['quantity'] = item.get('quantity', 1) + 1
                 st.rerun()
@@ -119,9 +154,9 @@ def show_cart():
                 if item.get('quantity', 1) > 1:
                     item['quantity'] = item.get('quantity', 1) - 1
                     st.rerun()
-        with col4:
-            st.write(f"Rs. {item['price'] * item.get('quantity', 1)}")
         with col5:
+            st.write(f"Rs. {item['price'] * item.get('quantity', 1)}")
+        with col6:
             if st.button("🗑️", key=f"remove_button_{i}"):
                 st.session_state.cart.pop(i)
                 st.rerun()
@@ -145,5 +180,5 @@ with st.sidebar:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
-if __name__ == "__main__":
-    show_cart() 
+# Show cart when page loads
+show_cart() 

@@ -1,0 +1,28 @@
+{
+    "products": [
+        {
+            "id": 1,
+            "name": "Classic White T-Shirt",
+            "description": "100% Cotton Classic White T-Shirt",
+            "price": 1500,
+            "image": "images/image 01.png",
+            "sizes": ["S", "M", "L", "XL"]
+        },
+        {
+            "id": 2,
+            "name": "Black T-Shirt",
+            "description": "Premium Quality Black T-Shirt",
+            "price": 1800,
+            "image": "images/image 02.png",
+            "sizes": ["M", "L", "XL"]
+        },
+        {
+            "id": 3,
+            "name": "Yellow T-Shirt",
+            "description": "Premium Quality Black T-Shirt",
+            "price": 1200,
+            "image": "images/image 03.png",
+            "sizes": ["S","M", "L", "XL"]
+        }
+    ]
+} 

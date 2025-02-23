@@ -8,6 +8,10 @@ import uuid
 if 'cart' not in st.session_state:
     st.session_state.cart = []
 
+# Create necessary directories
+os.makedirs('orders', exist_ok=True)
+os.makedirs('data/images', exist_ok=True)
+
 def save_to_excel(order_data):
     # Create DataFrame for order
     order_items = []
@@ -87,37 +91,35 @@ def place_order():
             # Create DataFrame
             df_order = pd.DataFrame(excel_data)
             
-            # Ensure orders directory exists
-            os.makedirs('orders', exist_ok=True)
+            # Create filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"order_{timestamp}_{order_id}.xlsx"
+            filepath = os.path.join('orders', filename)
             
             # Save to Excel
-            filename = f"order_{order_id}.xlsx"
-            filepath = os.path.join('orders', filename)
-            df_order.to_excel(filepath, index=False)
+            df_order.to_excel(filepath, index=False, engine='openpyxl')
             
-            # Save order details in session state
-            st.session_state.last_order = {
-                'order_id': order_id,
-                'date': current_date,
-                'customer_name': customer_name,
-                'customer_phone': customer_phone,
-                'customer_address': customer_address,
-                'items': st.session_state.cart.copy(),
-                'total_amount': total_amount,
-                'excel_path': filepath  # Save Excel file path
-            }
+            # Show success message
+            st.success(f"Order #{order_id} placed successfully!")
             
-            # Clear the cart
+            # Add download button
+            with open(filepath, 'rb') as file:
+                excel_bytes = file.read()
+                st.download_button(
+                    label=f"📥 Download Invoice #{order_id}",
+                    data=excel_bytes,
+                    file_name=filename,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key="download_invoice_button"
+                )
+            
+            # Clear cart
             st.session_state.cart = []
-            
-            # Redirect to order confirmation page
-            st.switch_page("pages/order.py")
             
             return True
             
         except Exception as e:
             st.error(f"Error placing order: {str(e)}")
-            st.error("Please try again or contact support.")
             return False
     
     return False

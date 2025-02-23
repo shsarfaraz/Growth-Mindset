@@ -152,12 +152,9 @@ st.markdown("""
 def show_products():
     st.title("👕 Our Products")
     
-    # Initialize cart if not exists
-    if 'cart' not in st.session_state:
-        st.session_state.cart = []
-    
     # Show cart summary in sidebar
     with st.sidebar:
+        st.markdown("### 🛒 Cart Summary")
         cart_count = len(st.session_state.cart)
         total = sum(item['price'] * item.get('quantity', 1) for item in st.session_state.cart)
         
@@ -172,20 +169,19 @@ def show_products():
             </style>
             """, unsafe_allow_html=True)
             
+        st.markdown(f"""
+            <div class="cart-summary">
+                <p>Items in Cart: {cart_count}</p>
+                <p>Total Amount: Rs. {total}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
         if cart_count > 0:
-            st.markdown(f"""
-                <div class="cart-summary">
-                    <h3>🛒 Cart Summary</h3>
-                    <p>Items: {cart_count}</p>
-                    <p>Total: Rs. {total}</p>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            if st.button("View Cart", key="view_cart_button"):
+            if st.button("View Cart 🛒", type="primary"):
                 st.switch_page("pages/cart.py")
     
-    # Rest of the products display code...
     try:
+        # Load products data
         with open('data/products.json', 'r', encoding='utf-8') as f:
             products_data = json.load(f)
             
@@ -195,10 +191,11 @@ def show_products():
             
             with col1:
                 image_path = product.get('image', '')
-                if os.path.exists(image_path):
-                    st.image(image_path, use_container_width=True)
-                else:
-                    st.warning("Image not found")
+                try:
+                    st.image(image_path)
+                except Exception as e:
+                    st.error(f"Error loading image: {image_path}")
+                    st.error(str(e))
             
             with col2:
                 st.markdown(f"### {product['name']}")
@@ -217,12 +214,8 @@ def show_products():
                     st.success(f"Added {product['name']} (Size: {selected_size}) to cart!")
                     st.rerun()
                     
-    except FileNotFoundError:
-        st.error("Products data file not found!")
-    except json.JSONDecodeError:
-        st.error("Error reading products data!")
     except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
+        st.error(f"Error loading products: {str(e)}")
 
 def add_to_cart(product, selected_size):
     if 'cart' not in st.session_state:

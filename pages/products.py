@@ -1,5 +1,6 @@
 import streamlit as st
 import json
+import os
 
 # Initialize session state if not already initialized
 if 'cart' not in st.session_state:
@@ -149,64 +150,79 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def show_products():
-    # Calculate cart count
-    cart_count = len(st.session_state.cart) if 'cart' in st.session_state else 0
-
-    # Page title
-    st.markdown("""
-        <h1 style='text-align: center; color: #2c3e50; margin-bottom: 2rem; 
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);'>
-        🛍️ Our Premium T-Shirts Collection
-        </h1>
-    """, unsafe_allow_html=True)
+    st.title("👕 Our Products")
     
-    # Add cart summary to sidebar
-    if cart_count > 0:
-        with st.sidebar:
-            total = sum(item['price'] * item.get('quantity', 1) for item in st.session_state.cart)
+    # Initialize cart if not exists
+    if 'cart' not in st.session_state:
+        st.session_state.cart = []
+    
+    # Show cart summary in sidebar
+    with st.sidebar:
+        cart_count = len(st.session_state.cart)
+        total = sum(item['price'] * item.get('quantity', 1) for item in st.session_state.cart)
+        
+        st.markdown("""
+            <style>
+            .cart-summary {
+                background-color: #f0f2f6;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
+        if cart_count > 0:
             st.markdown(f"""
                 <div class="cart-summary">
-                    <strong>🛒 Cart Summary</strong><br>
-                    Items: {cart_count}<br>
-                    Total: Rs. {total}<br>
-                    <br>
+                    <h3>🛒 Cart Summary</h3>
+                    <p>Items: {cart_count}</p>
+                    <p>Total: Rs. {total}</p>
                 </div>
             """, unsafe_allow_html=True)
             
-            if st.button("🛒 Checkout", key="sidebar_cart"):
-                view_cart()
+            if st.button("View Cart", key="view_cart_button"):
+                st.switch_page("pages/cart.py")
     
-    # Load products data
-    with open('data/products.json', 'r', encoding='utf-8') as f:
-        products_data = json.load(f)
-    
-    # Display products in a grid
-    for product in products_data['products']:
-        with st.container():
-            st.markdown('<div class="product-card">', unsafe_allow_html=True)
+    # Rest of the products display code...
+    try:
+        with open('data/products.json', 'r', encoding='utf-8') as f:
+            products_data = json.load(f)
             
+        # Display products in a grid
+        for product in products_data['products']:
             col1, col2 = st.columns([1, 2])
             
             with col1:
-                st.image(product['image'], use_container_width=True)
+                image_path = product.get('image', '')
+                if os.path.exists(image_path):
+                    st.image(image_path, use_container_width=True)
+                else:
+                    st.warning("Image not found")
             
             with col2:
-                st.markdown(f"""
-                    <div class="product-details">
-                        <h2 class="product-title">{product['name']}</h2>
-                        <p class="product-description">{product['description']}</p>
-                        <div class="price-tag">Rs. {product['price']}</div>
-                    </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f"### {product['name']}")
+                st.markdown(f"**Price:** Rs. {product['price']}")
+                st.markdown(f"**Description:** {product.get('description', 'No description available')}")
                 
-                st.markdown('<p style="color: #666; margin-bottom: 0.5rem;">Select Your Size:</p>', 
-                          unsafe_allow_html=True)
-                size = st.selectbox('', product['sizes'], key=f"size_{product['id']}")
+                sizes = product.get('sizes', ['S', 'M', 'L', 'XL'])
+                selected_size = st.selectbox(
+                    "Select Size",
+                    sizes,
+                    key=f"size_{product['name']}"
+                )
                 
-                if st.button('🛒 Add to Cart', key=f"add_{product['id']}"):
-                    add_to_cart(product, size)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
+                if st.button("Add to Cart", key=f"add_{product['name']}"):
+                    add_to_cart(product, selected_size)
+                    st.success(f"Added {product['name']} (Size: {selected_size}) to cart!")
+                    st.rerun()
+                    
+    except FileNotFoundError:
+        st.error("Products data file not found!")
+    except json.JSONDecodeError:
+        st.error("Error reading products data!")
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
 
 def add_to_cart(product, selected_size):
     if 'cart' not in st.session_state:

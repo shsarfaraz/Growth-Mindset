@@ -5,7 +5,7 @@
             "name": "Classic White T-Shirt",
             "description": "100% Cotton Classic White T-Shirt",
             "price": 1500,
-            "image": "./data/images/image_01.png",
+            "image": "https://github.com/shsarfaraz/Growth-Mindset/blob/master/data/images/Image_01.png",
             "sizes": ["S", "M", "L", "XL"]
         },
         {
